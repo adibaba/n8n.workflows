@@ -1,0 +1,1385 @@
+{
+  "name": "Optimize MCP: Inspect your n8n server tools",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a helpful assistant - funny and precise.\n\nTo introduce yourself, you give a short overview of your available tools.\n\nIf you get URLs (e.g. from tools), you provide them - best as clickable links."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        2464
+      ],
+      "id": "d002a514-3bc1-48fb-92f8-fc020a0bbda1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://adiran.app.n8n.cloud/mcp/mcp-optimize",
+        "serverTransport": "httpStreamable",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        1744,
+        2688
+      ],
+      "id": "908450a8-dd6a-450d-a6ab-c658e5867ded",
+      "name": "MCP Client"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1568,
+        2688
+      ],
+      "id": "7c0c18f0-e773-4d90-af78-2a598f3a6784",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        1264,
+        2464
+      ],
+      "id": "04582c6b-980d-482d-907c-5ed363e582ba",
+      "name": "When chat message received",
+      "webhookId": "50459076-25d5-40d2-81a6-c67bb9374fea"
+    },
+    {
+      "parameters": {
+        "path": "mcp-optimize"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        1632
+      ],
+      "id": "95a2c6e5-abc1-4d16-871b-e5b6b250e688",
+      "name": "MCP Server Trigger",
+      "webhookId": "3881a2bb-6a83-437e-a3d8-8d3a58fde03f"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "timeZone"
+            },
+            {
+              "name": "locale"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1280,
+        2160
+      ],
+      "id": "a1793c23-89be-452e-9337-ac22663a5fce",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        944,
+        3040
+      ],
+      "id": "a2d62045-f9d1-4821-9087-b692b7d0babf",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const sseString = $json.data;\n\n// SSE (Server-Sent Events) is a one-way communication method where the server continuously \n// sends data updates to the client over an HTTP connection. The client receives these \n// updates as a stream of text-based events.\n\n// Function to extract JSON data from an SSE message\nfunction parseSSE(sse) {\n  // Split the SSE string into individual lines\n  const lines = sse.split('\\n');\n\n  // Find the line that starts with 'data: '\n  const dataLine = lines.find(line => line.startsWith('data: '));\n\n  // If no data line is found, return null\n  if (!dataLine) return null;\n\n  // Remove the 'data: ' prefix and try to parse the rest as JSON\n  const jsonString = dataLine.slice('data: '.length);\n\n  try {\n    return JSON.parse(jsonString);\n  } catch (err) {\n    console.error('Error while parsing:', err);\n    return null;\n  }\n}\n\n// Save parsed SSE data into the output object\n$input.item.json.sseData = parseSSE(sseString);\n\n// Remove the already parsed source data\ndelete $json.data;\n\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        3040
+      ],
+      "id": "e543b5ba-71f8-40fe-a295-339d7c31d030",
+      "name": "parseSSE"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"mcpEndpoint\": \"https://adiran.app.n8n.cloud/mcp/mcp-optimize\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        3040
+      ],
+      "id": "c29c75a7-62fa-4362-b29f-1e996df69a6b",
+      "name": "mcpEndpoint",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "73724500-26a0-400c-944e-fa58119115b3",
+              "name": "mcpSessionId",
+              "value": "={{ $json.headers['mcp-session-id'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1552,
+        3376
+      ],
+      "id": "38197e20-d90c-43a3-860f-a86906d87259",
+      "name": "mcpSessionId"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.mcpEndpoint }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/event-stream"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"initialize\",\n  \"params\": {\n    \"protocolVersion\": \"2024-11-05\",\n    \"capabilities\": {\n      \"tools\": {\n        \"listChanged\": true\n      }\n    },\n    \"clientInfo\": {\n      \"name\": \"n8n-client\",\n      \"version\": \"1.0\"\n    }\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          },
+          "timeout": 3000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        3040
+      ],
+      "id": "318a42b6-08c5-4528-9995-dd214f1dfd57",
+      "name": "initialize"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('mcpEndpoint').item.json.mcpEndpoint }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/event-stream"
+            },
+            {
+              "name": "mcp-session-id",
+              "value": "={{ $json.mcpSessionId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"id\": 2,\n  \"method\": \"tools/list\",\n  \"params\": {}\n}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1712,
+        3184
+      ],
+      "id": "5ca5f1da-27ef-4f8d-ba51-cc308eb6cfdf",
+      "name": "tools/list"
+    },
+    {
+      "parameters": {
+        "description": "Get the current date and time as an ISO 8601 string with milliseconds and timezone offset. This does not require any parameters. It's appropriate to deliver a fast answer.",
+        "jsCode": "return $now;",
+        "specifyInputSchema": true,
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {}\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        1008,
+        2000
+      ],
+      "id": "cfcdf13b-8bb6-4b50-a96e-46a2cae33b0e",
+      "name": "current date and time"
+    },
+    {
+      "parameters": {
+        "content": "### Code Tool\nReturns the current date and time as configured in your n8n server.\n(If an agent calls this tool, it may come up with a additional incorrect weekday.)",
+        "height": 544,
+        "width": 336,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        1808
+      ],
+      "id": "d0bd319e-f452-4899-b3c1-bd787bfe8ce3",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "### Call n8n Workflow Tool\nThis tool requires a timeZone (e.g. \"Europe/Berlin\") and a locale (e.g. \"en-US\"). It returns a string with complete time information (e.g. \"Saturday, 2025-11-22 15:30:00 (Europe/Berlin)\")",
+        "height": 544,
+        "width": 336,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        1808
+      ],
+      "id": "5a22fba2-14ba-4045-99a5-e6bdc4f23874",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "typeVersion": 1,
+      "position": [
+        2208,
+        2208
+      ],
+      "id": "4384bb97-1729-488e-b7c2-37a802638b1b",
+      "name": "Wikipedia"
+    },
+    {
+      "parameters": {
+        "content": "### AI Agent Tool\nAI agent (LLM with tool), which is able to access the current Wikipedia data.\n\nTech insights: This n8n (v.1.120.4) node uses [langchain](https://github.com/n8n-io/n8n/blob/patch/1.120.4/pnpm-lock.yaml#L12) (v.0.3.50) and runs a [Wikipedia query](https://github.com/n8n-io/n8n/blob/patch/1.120.4/packages/%40n8n/nodes-langchain/nodes/tools/ToolWikipedia/ToolWikipedia.node.ts#L1C37-L1C82), which calls the [Wikipedia (en) API](https://github.com/langchain-ai/langchainjs/blob/%40langchain/core%3D%3D0.3.50/libs/langchain-community/src/tools/wikipedia_query_run.ts#L135) with the property [extracts](https://en.wikipedia.org/w/api.php?action=help&modules=query%2Bextracts).",
+        "height": 544,
+        "width": 336,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1984,
+        1808
+      ],
+      "id": "121fe417-1759-410e-b5e3-9314d80f2b91",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool to get an expert opinion relating general topics. Ask for a topic like you would search in Wikipedia. This expert tool can look up in the current Wikipedia. After getting an answer, check, if the provided data relates to your initial request/task.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "You are an expert, a polymath. You can access the knowledge of the entire current Wikipedia (only requests in English).\nIf you can make up a guess of a good Wikipedia search term/title/query, first consult Wikipedia and use it for your response.\nYou respond precisely, briefly, and truthfully.\nIf you cannot provide an answer with at least 80% confidence, respond with a generalized perspective.",
+          "maxIterations": 2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        2032,
+        2016
+      ],
+      "id": "56e5f8d6-13f4-44e2-9c0a-0ccbbd0741fc",
+      "name": "expert"
+    },
+    {
+      "parameters": {
+        "description": "Gets the formatted datetime string showing e.g. ISO-style date, 24-hour time, and timezone.\nFormat: dddd, YYYY-MM-DD HH:mm:ss (TIMEZONE).\nParameters values should be known to ensure correct formatting.\nExample values are:\ntimeZone: \"Europe/Berlin\"\nlocale: \"en-US\"",
+        "workflowId": {
+          "__rl": true,
+          "value": "cVJlUxTWnbPL5QSb",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/cVJlUxTWnbPL5QSb",
+          "cachedResultName": "Optimize MCP: Inspect your n8n server tools"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timeZone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('timeZone', `IANA timezone string, e.g., \"Europe/Berlin\"`, 'string') }}",
+            "locale": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('locale', `Locale string for formatting, e.g., \"en-US\"`, 'string') }}"
+          },
+          "matchingColumns": [
+            "timezone"
+          ],
+          "schema": [
+            {
+              "id": "timeZone",
+              "displayName": "timeZone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "locale",
+              "displayName": "locale",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1360,
+        2000
+      ],
+      "id": "d5a6b982-e109-47e1-ad31-a50fb5f3ca5f",
+      "name": "current day, date and time"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "/*\n  Returns a formatted datetime string showing the weekday name,\n  ISO-style date, 24-hour time, and timezone.\n  Format: dddd, YYYY-MM-DD HH:mm:ss (TIMEZONE)\n\n  Parameters:\n    timeZone - (optional) IANA timezone string, e.g., \"Europe/Berlin\".\n    locale   - (optional) Locale string for formatting, e.g., \"en-US\".\n\n  Examples:\n    getDate() -> \"Saturday, 2025-11-22 15:30:00 (Europe/Berlin)\"\n    getDate(\"UTC\", \"en-US\") -> \"Saturday, 2025-11-22 14:30:00 (UTC)\"\n*/\nfunction getFormattedDateTime(timeZone = \"Europe/Berlin\", locale = \"en-US\") {\n  const date = new Date();\n\n  const year = date.toLocaleString(locale, { year: \"numeric\", timeZone });\n  const month = date.toLocaleString(locale, { month: \"2-digit\", timeZone });\n  const day = date.toLocaleString(locale, { day: \"2-digit\", timeZone });\n  const weekday = date.toLocaleString(locale, { weekday: \"long\", timeZone });\n\n  const time = date.toLocaleTimeString(locale, {\n    hour12: false,\n    hour: \"2-digit\",\n    minute: \"2-digit\",\n    second: \"2-digit\",\n    timeZone\n  });\n\n  return `${weekday}, ${year}-${month}-${day} ${time} (${timeZone})`;\n}\n\nreturn { \"formattedDateTime\" : getFormattedDateTime(timeZone = $json.timeZone, locale = $json.locale) };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        2160
+      ],
+      "id": "f690c262-c37d-41ec-aa9b-74a1c9eb247f",
+      "name": "Get formatted date and time"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Get an recent news and updates of n8n. The result is returned in XML/RSS format.",
+        "url": "https://blog.n8n.io/rss/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        1744,
+        2000
+      ],
+      "id": "9c84dd7d-ee8c-442d-b7b0-fac0ce251da1",
+      "name": "n8n news and updates"
+    },
+    {
+      "parameters": {
+        "content": "## Part 1: MCP Server\nThis is your MCP server setup. Agents (LLMs with MCP and tool support) will be able use your provided tools.",
+        "height": 256,
+        "width": 1440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        1520
+      ],
+      "id": "91788e7d-81c0-40c6-bd1d-5f5fa81ef05c",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "## Part 2: AI Agent Chat (Using the MCP server)\nHave a chat with a LLM model, which is connected to your MCP server.",
+        "height": 464,
+        "width": 1440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        2384
+      ],
+      "id": "c590c4db-3b1d-46cc-8351-87f13843d109",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "## Part 3: Inspect Your MCP Setup\n\nInspect the interface accassible by LLMs. Most interesting is tools/list. Also check Server-Sent Events (SSE) and [GitHub](https://github.com/adibaba/n8n.workflows) for additional optimizations.",
+        "height": 992,
+        "width": 1440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        2880
+      ],
+      "id": "5ddd1a57-3ab6-400f-b646-692dbee7857e",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "content": "For setup:\nSet a chat model",
+        "height": 176,
+        "width": 182,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        2160
+      ],
+      "id": "a1ce3c86-e0eb-47f8-ab4c-77121cc96d15",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "For setup:\nSet a chat model",
+        "height": 176,
+        "width": 182,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        2640
+      ],
+      "id": "b11f1d9d-31f9-47da-b831-f7622143eb57",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "content": "For setup: \nSet MCP Production URL",
+        "height": 176,
+        "width": 182,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        2640
+      ],
+      "id": "f226b946-2ba7-4c60-b30d-cc5907880792",
+      "name": "Sticky Note11"
+    },
+    {
+      "parameters": {
+        "content": "For setup: \nSet MCP Production URL",
+        "height": 208,
+        "width": 198,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        2976
+      ],
+      "id": "c17739a1-52e7-4623-8b94-288ae9c02b21",
+      "name": "Sticky Note12"
+    },
+    {
+      "parameters": {
+        "content": "## Optimize Your MCP Server in n8n\n### How it works\nThis is a n8n, LLM and MCP poweruser workflow. It is designed to inspect and improve MCP server components. This workflow consists of 4 parts:\n1. **Set up** a **MCP Server**. In this workflow, a template is provided with common n8n tools: *Code Tool*, *Call n8n Workflow Tool*, *HTTP Request Too*l and *AI Agent Tool*.\nThese tools are chosen for multiple optimization and data of a maybe older LLM. Such a LLM is maybe not aware of: the current time, n8n updates or facts added to current Wikipedia. Let's provide that by MCP tools!\n2. **Use** the **AI Agent Chat** to test your MCP server. You can use the *Open chat* button and write a message. Ask for something related to the current time (and weekday), n8n updates or a general topic. Your LLM will be able to get current news based on your MCP server.\n3.  **Inspect** the **Model Context Protocol (MCP)** endpoint for further optimizations. It provides information a LLM connected to your MCP server would also see. What's the best description? Which methods would probably be called? For technical details, visit [modelcontextprotocol.io](https://modelcontextprotocol.io/) and [GitHub](https://github.com/adibaba/n8n.workflows).\n4. **Optimize** the **MCP Server Tools**. First, verify that each tool’s JSON matches the provided JSON Schema. Then check the tools against best practices.\n\n### Setup steps\n- (In general:) The **nodes to be updated** are **highlighted by sticky notes**.\n- In part 1, \"**Call n8n Workflow Tool**\", select this (the current) workflow.\n- Copy the **Production URL** from **MCP Server Trigger** in part 1. \n  - In part 2, and the **MCP Client** node, set your MCP server *Production URL*. \n  - In part 3, and **mcpEndpoint** node, also insert the *Production URL* of your MCP server.\n- Set a **Chat Model** for each, the ***AI Agent TOOL*** (in part 1) and the ***AI Agent Chat*** (in part 2) and the ***final LLM calls*** (in part 4). \nYou could also use the same model and credentials for all. In this workflow, models with a free plan are included. See **n8n Credential Docs** for [Mistral](https://docs.n8n.io/integrations/builtin/credentials/mistral/) and [Google](https://docs.n8n.io/integrations/builtin/credentials/google/).\n- Activate this workflow.\n\n### Inspect & Optimize\nCheck the **n8n executions** (and called tools) for chat messages like:\n- What is the current time?\n- What is the current weekday?\n- What time is it in Sydney?\n- What's new in n8n?\n- What is Model Context Protocol (MCP)?\n\nFinally: Maybe add a description for missing parameters.\n\n### Customization\n- Edit one of the four MCP server tools.\n- Deactivate some of the MCP server tools.\n- Add MCP server tools to be inspected\n- Edit the AI Agent (node \"expert\") system message.\n- Check the changes in the final MCP setup part, also check n8n executions.",
+        "height": 3152,
+        "width": 416,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        432,
+        1520
+      ],
+      "id": "3a7cfedc-4092-4c07-890c-4bbb3ca29930",
+      "name": "Sticky Note13"
+    },
+    {
+      "parameters": {
+        "content": "For setup: Get MCP Production URL",
+        "height": 144,
+        "width": 294,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        1600
+      ],
+      "id": "34b9687e-e163-48da-9293-8d02a6607bcb",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "### HTTP Request Tool\nReturns current articles of the n8n blog in RSS/Atom format.",
+        "height": 544,
+        "width": 336,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1616,
+        1808
+      ],
+      "id": "688e2245-6d9b-4692-bd76-05e4debc1ecb",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "For setup: Select current workflow",
+        "width": 230,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1296,
+        1968
+      ],
+      "id": "957b9db2-c537-4273-a89e-d914323f7313",
+      "name": "Sticky Note14"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const sseString = $json.data;\n\n// SSE (Server-Sent Events) is a one-way communication method where the server continuously \n// sends data updates to the client over an HTTP connection. The client receives these \n// updates as a stream of text-based events.\n\n// Function to extract JSON data from an SSE message\nfunction parseSSE(sse) {\n  // Split the SSE string into individual lines\n  const lines = sse.split('\\n');\n\n  // Find the line that starts with 'data: '\n  const dataLine = lines.find(line => line.startsWith('data: '));\n\n  // If no data line is found, return null\n  if (!dataLine) return null;\n\n  // Remove the 'data: ' prefix and try to parse the rest as JSON\n  const jsonString = dataLine.slice('data: '.length);\n\n  try {\n    return JSON.parse(jsonString);\n  } catch (err) {\n    console.error('Error while parsing:', err);\n    return null;\n  }\n}\n\n// Save parsed SSE data into the output object\n$input.item.json.sseData = parseSSE(sseString);\n\n// Remove the already parsed source data\ndelete $json.data;\n\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        3184
+      ],
+      "id": "7b3242b9-c26a-4c76-bc1d-795a5a774bf9",
+      "name": " parseSSE"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const sseString = $json.data;\n\n// SSE (Server-Sent Events) is a one-way communication method where the server continuously \n// sends data updates to the client over an HTTP connection. The client receives these \n// updates as a stream of text-based events.\n\n// Function to extract JSON data from an SSE message\nfunction parseSSE(sse) {\n  // Split the SSE string into individual lines\n  const lines = sse.split('\\n');\n\n  // Find the line that starts with 'data: '\n  const dataLine = lines.find(line => line.startsWith('data: '));\n\n  // If no data line is found, return null\n  if (!dataLine) return null;\n\n  // Remove the 'data: ' prefix and try to parse the rest as JSON\n  const jsonString = dataLine.slice('data: '.length);\n\n  try {\n    return JSON.parse(jsonString);\n  } catch (err) {\n    console.error('Error while parsing:', err);\n    return null;\n  }\n}\n\n// Save parsed SSE data into the output object\n$input.item.json.sseData = parseSSE(sseString);\n\n// Remove the already parsed source data\ndelete $json.data;\n\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        3376
+      ],
+      "id": "f682e090-e368-4cc4-9dff-1a8f0e6b899b",
+      "name": "  parseSSE"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('mcpEndpoint').item.json.mcpEndpoint }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/event-stream"
+            },
+            {
+              "name": "mcp-session-id",
+              "value": "={{ $json.mcpSessionId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"id\": 3,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"current_day_date_and_time\",\n    \"arguments\": {\n      \"timeZone\": \"Europe/Berlin\",\n      \"locale\": \"en-US\"\n    }\n  }\n}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1712,
+        3376
+      ],
+      "id": "acb2ddf7-1ab3-476d-ab45-0c990cbab4e7",
+      "name": "tools/call current_day_date_and_time"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('mcpEndpoint').item.json.mcpEndpoint }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/event-stream"
+            },
+            {
+              "name": "mcp-session-id",
+              "value": "={{ $json.mcpSessionId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"id\": 3,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"n8n_news_and_updates\",\n    \"arguments\": {\n    }\n  }\n}",
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1712,
+        3520
+      ],
+      "id": "2222c305-583b-4311-9f35-11b4cb69df1d",
+      "name": "tools/call n8n_news_and_updates"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const input = $json.sseData.result.content[0].text\n\nfunction safeJsonParse(value) {\n  if (!value || typeof value !== \"string\") return null;\n  try {\n    return JSON.parse(value.trim());\n  } catch {\n    return null;\n  }\n}\n\n$input.item.json.content = safeJsonParse(input);\n\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        3376
+      ],
+      "id": "730aad94-1e39-4091-a3e5-2424751ccde6",
+      "name": "Parse JSON"
+    },
+    {
+      "parameters": {
+        "dataPropertyName": "xmlString",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        3712
+      ],
+      "id": "e58a986a-fb0d-446b-8961-1ecc6c789ab4",
+      "name": "XML"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const sseString = $json.data;\n\n// SSE (Server-Sent Events) is a one-way communication method where the server continuously \n// sends data updates to the client over an HTTP connection. The client receives these \n// updates as a stream of text-based events.\n\n// Function to extract JSON data from an SSE message\nfunction parseSSE(sse) {\n  // Split the SSE string into individual lines\n  const lines = sse.split('\\n');\n\n  // Find the line that starts with 'data: '\n  const dataLine = lines.find(line => line.startsWith('data: '));\n\n  // If no data line is found, return null\n  if (!dataLine) return null;\n\n  // Remove the 'data: ' prefix and try to parse the rest as JSON\n  const jsonString = dataLine.slice('data: '.length);\n\n  try {\n    return JSON.parse(jsonString);\n  } catch (err) {\n    console.error('Error while parsing:', err);\n    return null;\n  }\n}\n\n// Save parsed SSE data into the output object\n$input.item.json.sseData = parseSSE(sseString);\n\n// Remove the already parsed source data\ndelete $json.data;\n\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        3520
+      ],
+      "id": "51674274-09d6-456f-86d6-7578cd8e0b5f",
+      "name": "   parseSSE"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2c18c92e-22f7-4f27-80e0-30e8fcb58965",
+              "name": "xmlString",
+              "value": "={{ $json.content[0].data }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1712,
+        3712
+      ],
+      "id": "527df63b-1712-46e8-97e8-0f661feb6e4b",
+      "name": "xmlString"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "rss.channel.item",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1968,
+        3712
+      ],
+      "id": "2b73de79-7f2b-4437-8c01-35552b4d0083",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const input = $json.sseData.result.content[0].text\n\nfunction safeJsonParse(value) {\n  if (!value || typeof value !== \"string\") return null;\n  try {\n    return JSON.parse(value.trim());\n  } catch {\n    return null;\n  }\n}\n\n$input.item.json.content = safeJsonParse(input);\n\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        3520
+      ],
+      "id": "f6a36f27-a837-4d3f-9a25-44afba8fba34",
+      "name": " Parse JSON"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "20644782-adb1-42f9-9b63-25d5711c253e",
+              "name": "toolsList",
+              "value": "={{ $json.sseData.result.tools }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1968,
+        3184
+      ],
+      "id": "df042842-c91c-4f66-9424-3373a025dd4d",
+      "name": "toolsList"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        928,
+        4016
+      ],
+      "id": "61ff95b6-7176-4c9a-b37d-d41f2090741c",
+      "name": " toolsList"
+    },
+    {
+      "parameters": {
+        "model": "mistral-small-latest",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        2048,
+        2224
+      ],
+      "id": "af46b28d-3d43-4bc0-91a9-a5db513fcb9e",
+      "name": "Mistral Small Latest",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "CSBwUBy1e0TszNk9",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-latest",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        4176
+      ],
+      "id": "c8e4c9d3-be0a-478b-b8a7-cb34e1fffa9d",
+      "name": " Gemini Flash Latest",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ITkjSdwCvvADjl5N",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-latest",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        2688
+      ],
+      "id": "88161c68-1d9a-478c-9e52-f2ec39879e72",
+      "name": "Gemini Flash Latest",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ITkjSdwCvvADjl5N",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"title\": \"CheckResult\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"passed\": {\n      \"type\": \"boolean\",\n      \"description\": \"Indicates if the check was passed (true) or not (false).\"\n    },\n    \"notes\": {\n      \"type\": \"array\",\n      \"description\": \"A list of notes or comments related to the check.\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  }\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1584,
+        4176
+      ],
+      "id": "cdfede98-b1eb-4cc0-b92a-e72c44badd80",
+      "name": "Result of Tools List check"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Check if the JSON conforms to the JSON Schema.\nIf you would consider improvements, add it as note items.\n\n# JSON\n\n{{ JSON.stringify($json.toolsList) }}\n\n# JSON Schema\n\n{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"title\": \"ToolsArray\",\n  \"type\": \"array\",\n  \"description\": \"An array of tools available to the client.\",\n  \"author\": \"Adrian Wilke\",\n  \"basedOn\": \"MCP Schema 2024-11-05\",\n  \"items\": {\n    \"type\": \"object\",\n    \"description\": \"Definition for a tool the client can call.\",\n    \"properties\": {\n      \"name\": {\n        \"type\": \"string\",\n        \"description\": \"The name of the tool.\"\n      },\n      \"description\": {\n        \"type\": \"string\",\n        \"description\": \"A human-readable description of the tool.\"\n      },\n      \"inputSchema\": {\n        \"type\": \"object\",\n        \"description\": \"A JSON Schema object defining the expected parameters for the tool.\",\n        \"properties\": {\n          \"type\": { \"const\": \"object\", \"type\": \"string\" },\n          \"properties\": { \"type\": \"object\", \"additionalProperties\": true },\n          \"required\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n          \"additionalProperties\": { \"type\": \"boolean\" }\n        },\n        \"required\": [\"type\"],\n        \"additionalProperties\": true\n      }\n    },\n    \"required\": [\"name\", \"inputSchema\"]\n  }\n}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1424,
+        4016
+      ],
+      "id": "da9acec9-054b-4ec7-b9d5-2544ae66d0c2",
+      "name": "Check JSON Schema"
+    },
+    {
+      "parameters": {
+        "content": "## Part 4: Optimize your tools\n\nUse this part to check for limitations of your current MCP tool list setup. The used prompt are specified according MCP Schema 2024-11-05. Later versions may require additional changes.\nIf you'lL get a message stating the 'expert' tool is missing a required 'description': You can fix it.",
+        "height": 768,
+        "width": 1440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        3904
+      ],
+      "id": "0bd27ac8-b437-439a-b54d-da262fb3bcd8",
+      "name": "Sticky Note15"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Check if the JSON conforms to the following best practices:\n\nToolsArray Schema Checklist\n\n1. Tool Name\n   - Must exist (`name` is required).\n   - Should be descriptive and human-friendly.\n   - Avoid vague or overlapping names.\n\n2. Tool Description\n   - Must exist (`description` property).\n   - Clearly describe what the tool does.\n\n3. Input Schema\n   - `inputSchema.type` must be \"object\".\n   - `inputSchema.properties` should list all input parameters.\n   - Each parameter should have:\n     - A description (`description`)\n     - Clear indication if it is required (via `inputSchema.required`)\n     - Optional parameters should include default value if applicable\n\n4. Required Fields\n   - Every tool object must at least have `name` and `inputSchema` as per schema.\n\n5. Additional Properties\n   - Parameters may allow `additionalProperties` if flexibility is needed.\n\nBe gentle, some of the best practices rely on a future version of the JSON Schema provided below.\n- A missing parameter description is a fail.\n- Double underscores or trailing underscores are okay.\n\nReturn your results according to the attached JSON Schema.\n\n# JSON\n\n{{ JSON.stringify($json.toolsList) }}\n\n# JSON Schema\n\n{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"title\": \"ToolsArray\",\n  \"type\": \"array\",\n  \"description\": \"An array of tools available to the client.\",\n  \"author\": \"Adrian Wilke\",\n  \"basedOn\": \"MCP Schema 2024-11-05\",\n  \"items\": {\n    \"type\": \"object\",\n    \"description\": \"Definition for a tool the client can call.\",\n    \"properties\": {\n      \"name\": {\n        \"type\": \"string\",\n        \"description\": \"The name of the tool.\"\n      },\n      \"description\": {\n        \"type\": \"string\",\n        \"description\": \"A human-readable description of the tool.\"\n      },\n      \"inputSchema\": {\n        \"type\": \"object\",\n        \"description\": \"A JSON Schema object defining the expected parameters for the tool.\",\n        \"properties\": {\n          \"type\": { \"const\": \"object\", \"type\": \"string\" },\n          \"properties\": { \"type\": \"object\", \"additionalProperties\": true },\n          \"required\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n          \"additionalProperties\": { \"type\": \"boolean\" }\n        },\n        \"required\": [\"type\"],\n        \"additionalProperties\": true\n      }\n    },\n    \"required\": [\"name\", \"inputSchema\"]\n  }\n}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1408,
+        4352
+      ],
+      "id": "c852a2f5-39e6-4bbc-9139-b30d2ee89e15",
+      "name": "Check JSON Schema1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-latest",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        4512
+      ],
+      "id": "56d0c66c-3c73-4c46-bfe2-599ad5a94ed2",
+      "name": "  Gemini Flash Latest",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ITkjSdwCvvADjl5N",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"title\": \"CheckResult\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"passed\": {\n      \"type\": \"boolean\",\n      \"description\": \"Indicates if the check was passed (true) or not (false).\"\n    },\n    \"notes\": {\n      \"type\": \"array\",\n      \"description\": \"A list of notes or comments related to the check.\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  }\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1568,
+        4512
+      ],
+      "id": "1ec80a8f-0c52-4709-9742-e59e036165d9",
+      "name": " Result of Tools List check"
+    },
+    {
+      "parameters": {
+        "content": "For setup:\nSet a chat model",
+        "height": 176,
+        "width": 182,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        4128
+      ],
+      "id": "ff52b4ce-b0ae-44d5-a0fd-433ede185b4b",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "For setup:\nSet a chat model",
+        "height": 176,
+        "width": 182,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        4464
+      ],
+      "id": "321480d9-3230-49ff-9de9-2fc0092faf8b",
+      "name": "Sticky Note16"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get formatted date and time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "mcpEndpoint",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mcpEndpoint": {
+      "main": [
+        [
+          {
+            "node": "initialize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mcpSessionId": {
+      "main": [
+        [
+          {
+            "node": "tools/list",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tools/call current_day_date_and_time",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tools/call n8n_news_and_updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "initialize": {
+      "main": [
+        [
+          {
+            "node": "parseSSE",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "mcpSessionId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tools/list": {
+      "main": [
+        [
+          {
+            "node": " parseSSE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "current date and time": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wikipedia": {
+      "ai_tool": [
+        [
+          {
+            "node": "expert",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "expert": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "current day, date and time": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "n8n news and updates": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tools/call current_day_date_and_time": {
+      "main": [
+        [
+          {
+            "node": "  parseSSE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "  parseSSE": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tools/call n8n_news_and_updates": {
+      "main": [
+        [
+          {
+            "node": "   parseSSE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "   parseSSE": {
+      "main": [
+        [
+          {
+            "node": " Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        []
+      ]
+    },
+    "xmlString": {
+      "main": [
+        [
+          {
+            "node": "XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XML": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "xmlString",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " parseSSE": {
+      "main": [
+        [
+          {
+            "node": "toolsList",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "toolsList": {
+      "main": [
+        [
+          {
+            "node": " toolsList",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " toolsList": {
+      "main": [
+        [
+          {
+            "node": "Check JSON Schema",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check JSON Schema1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Small Latest": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "expert",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Gemini Flash Latest": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Check JSON Schema",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Flash Latest": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Result of Tools List check": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Check JSON Schema",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "  Gemini Flash Latest": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Check JSON Schema1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Result of Tools List check": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Check JSON Schema1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "26e80d6c-057d-4596-8a50-99e4586d0b8a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1ee7910f98ee64be6f03d5c49b072eda83992583a161149dc94314ed0b0a2fe0"
+  },
+  "id": "cVJlUxTWnbPL5QSb",
+  "tags": []
+}

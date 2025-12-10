@@ -2,7 +2,7 @@
 
 ## Optimize MCP: Inspect your n8n server tools
 
-![Optimize MCP: Inspect your n8n server tools - n8n](Optimize-MCP_ Inspect-your-n8n-server-tools.png)
+![Optimize MCP: Inspect your n8n server tools - n8n](Optimize-MCP_%20Inspect-your-n8n-server-tools.png)
 
 [Download n8n JSON file](Optimize-MCP_ Inspect-your-n8n-server-tools.json)
 

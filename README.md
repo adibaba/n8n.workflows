@@ -4,7 +4,7 @@
 
 ![Optimize MCP: Inspect your n8n server tools - n8n](Optimize-MCP_%20Inspect-your-n8n-server-tools.png)
 
-[Download n8n JSON file](Optimize-MCP_ Inspect-your-n8n-server-tools.json)
+[Download n8n JSON file](Optimize-MCP_%20Inspect-your-n8n-server-tools.json)
 
 
 ## Towers of Hanoi
